@@ -368,10 +368,12 @@ public partial class PenumbraIpc
     public const string LabelProviderChangedItemTooltip = "Penumbra.ChangedItemTooltip";
     public const string LabelProviderChangedItemClick   = "Penumbra.ChangedItemClick";
     public const string LabelProviderGetChangedItems    = "Penumbra.GetChangedItems";
+    public const string LabelProviderGetChangedFiles    = "Penumbra.GetChangedFiles";
 
     internal ICallGateProvider< ChangedItemType, uint, object? >?                 ProviderChangedItemTooltip;
     internal ICallGateProvider< MouseButton, ChangedItemType, uint, object? >?    ProviderChangedItemClick;
     internal ICallGateProvider< string, IReadOnlyDictionary< string, object? > >? ProviderGetChangedItems;
+    internal ICallGateProvider< string, string, IReadOnlyDictionary< string, string > >? ProviderGetChangedFiles;
 
     private void OnClick( MouseButton click, object? item )
     {
@@ -416,6 +418,16 @@ public partial class PenumbraIpc
         {
             PluginLog.Error( $"Error registering IPC provider for {LabelProviderChangedItemClick}:\n{e}" );
         }
+
+        try
+        {
+            ProviderGetChangedFiles = pi.GetIpcProvider< string, string, IReadOnlyDictionary< string, string > >( LabelProviderGetChangedFiles );
+            ProviderGetChangedFiles.RegisterFunc( Api.GetChangedFilesForMod );
+        }
+        catch( Exception e )
+        {
+            PluginLog.Error( $"Error registering IPC provider for {LabelProviderGetChangedFiles}:\n{e}" );
+        }
     }
 
     private void DisposeChangedItemProviders()
@@ -429,6 +441,7 @@ public partial class PenumbraIpc
 public partial class PenumbraIpc
 {
     public const string LabelProviderGetMods                    = "Penumbra.GetMods";
+    public const string LabelProviderGetModsForCollection       = "Penumbra.GetModsForCollection";
     public const string LabelProviderGetCollections             = "Penumbra.GetCollections";
     public const string LabelProviderCurrentCollectionName      = "Penumbra.GetCurrentCollectionName";
     public const string LabelProviderDefaultCollectionName      = "Penumbra.GetDefaultCollectionName";
@@ -437,6 +450,7 @@ public partial class PenumbraIpc
     public const string LabelProviderGetMetaManipulations       = "Penumbra.GetMetaManipulations";
 
     internal ICallGateProvider< IList< (string, string) > >? ProviderGetMods;
+    internal ICallGateProvider< string, IList< (string, string) > >? ProviderGetModsForCollection;
     internal ICallGateProvider< IList< string > >?           ProviderGetCollections;
     internal ICallGateProvider< string >?                    ProviderCurrentCollectionName;
     internal ICallGateProvider< string >?                    ProviderDefaultCollectionName;
@@ -454,6 +468,16 @@ public partial class PenumbraIpc
         catch( Exception e )
         {
             PluginLog.Error( $"Error registering IPC provider for {LabelProviderGetMods}:\n{e}" );
+        }
+
+        try
+        {
+            ProviderGetModsForCollection = pi.GetIpcProvider< string, IList< (string, string) > >( LabelProviderGetModsForCollection );
+            ProviderGetModsForCollection.RegisterFunc( Api.GetModListForCollection );
+        }
+        catch( Exception e )
+        {
+            PluginLog.Error( $"Error registering IPC provider for {LabelProviderGetModsForCollection}:\n{e}" );
         }
 
         try

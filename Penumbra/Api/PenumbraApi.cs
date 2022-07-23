@@ -192,6 +192,44 @@ public class PenumbraApi : IDisposable, IPenumbraApi
         }
     }
 
+    public IReadOnlyDictionary< string, string > GetChangedFilesForMod ( string collectionName, string modName )
+    {
+        CheckInitialized();
+        try
+        {
+            if ( !Penumbra.CollectionManager.ByName( collectionName, out var collection ) )
+            {
+                collection = ModCollection.Empty;
+            }
+
+            if ( collection.HasCache )
+            {
+                var modRoot = new DirectoryInfo( GetModDirectory() );
+                var changedFiles = new Dictionary<string, string>();
+                foreach ( var (gamePath, modPath) in collection.ResolvedFiles )
+                {
+                    if ( modPath.Mod.Name.Equals( modName ) ) {
+                        if ( !modPath.Path.ToRelPath( modRoot, out var relativePath ))
+                        {
+                            // TODO: Return early, log message or panic?
+                            PluginLog.Warning( $"Could not calculate relative path for files in ${modName}: ${modPath.Path} ");
+                            continue;
+                        }
+                        changedFiles.Add ( gamePath.ToString(), relativePath.ToString() );
+                    }
+                }
+                return changedFiles;
+            }
+
+            return new Dictionary< string, string >();
+        }
+        catch ( Exception e )
+        {
+            PluginLog.Error( $"Could not obtain Changed Files for {modName}:\n{e}" );
+            throw;
+        }
+    }
+
     public IList< string > GetCollections()
     {
         CheckInitialized();
@@ -229,6 +267,24 @@ public class PenumbraApi : IDisposable, IPenumbraApi
     {
         CheckInitialized();
         return Penumbra.ModManager.Select( m => ( m.ModPath.Name, m.Name.Text ) ).ToArray();
+    }
+
+    public IList< (string, string) > GetModListForCollection( string collectionName )
+    {
+        CheckInitialized();
+
+        if ( !Penumbra.CollectionManager.ByName( collectionName, out var collection ) ) {
+            return new List< (string, string) >();
+        }
+
+        return Penumbra.ModManager
+            .Select( ( mod, _ ) => {
+                var settings = collection.Settings[mod.Index];
+                return settings != null && settings.Enabled ? mod : null;
+            })
+            .Where( mod => mod != null )
+            .Select( mod => (mod.ModPath.Name, mod.Name.Text) )
+            .ToArray();
     }
 
     public IDictionary< string, (IList< string >, SelectType) >? GetAvailableModSettings( string modDirectory, string modName )

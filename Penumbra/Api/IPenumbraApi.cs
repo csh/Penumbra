@@ -109,6 +109,9 @@ public interface IPenumbraApi : IPenumbraApiBase
     // Gets a dictionary of effected items from a collection
     public IReadOnlyDictionary< string, object? > GetChangedItemsForCollection( string collectionName );
 
+    // Gets a dictionary mapping game paths to replacement files, relative to the mod directory
+    public IReadOnlyDictionary< string, string > GetChangedFilesForMod ( string collectionName, string modName );
+
     // Obtain a list of the names of all currently installed collections.
     public IList< string > GetCollections();
 
@@ -126,6 +129,9 @@ public interface IPenumbraApi : IPenumbraApiBase
 
     // Obtain a list of all installed mods. The first string is their directory name, the second string is their mod name.
     public IList< (string, string) > GetModList();
+
+    // Obtain a list of all enabled mods for a given collection. The first string is their directory name, the second string is their mod name.
+    public IList< (string, string) > GetModListForCollection( string collectionName );
 
     // Try to reload an existing mod by its directory name or mod name.
     // Can return ModMissing or success.
